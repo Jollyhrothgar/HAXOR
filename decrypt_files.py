@@ -4,16 +4,6 @@ import time
 import curses
 import sys
 
-class bcolors:
-    HEADER = '\033[95m'
-    OKBLUE = '\033[94m'
-    OKCYAN = '\033[96m'
-    OKGREEN = '\033[92m'
-    WARNING = '\033[93m'
-    FAIL = '\033[91m'
-    ENDC = '\033[0m'
-    BOLD = '\033[1m'
-    UNDERLINE = '\033[4m'
 
 def generate_encrypted_filename():
     begin = random.choice([
@@ -50,8 +40,10 @@ def decrypt_file(loc, filename, time_delay, scr, message_history):
     file_number = int(random.random() * 100000)
 
     counter = 1
-
-    scr.addstr(loc+0, 0, f"Starting decryption subroutine on unknown file {file_number:07d}")
+    try:
+        scr.addstr(loc+0, 0, f"Starting decryption subroutine on unknown file {file_number:07d}")
+    except curses.error:
+        pass
     toggle = True
     while len(indices) > 0:
         idx = random.choice(indices)
@@ -64,24 +56,41 @@ def decrypt_file(loc, filename, time_delay, scr, message_history):
         periods = f'{periods: <3}'
         encrypted[idx] = filename[idx]
         encrypted = ''.join(encrypted)
-        scr.addstr(loc+1, 4, f"DECRYPTING{periods}")
+        try:
+            scr.addstr(loc+1, 4, f"DECRYPTING{periods}")
+        except curses.error:
+            pass
         if len(indices) == 0:
-            scr.addstr(loc+2, 8, f"{encrypted}", curses.color_pair(4))
+            try:
+                scr.addstr(loc+2, 8, f"{encrypted}", curses.color_pair(4))
+            except curses.error:
+                pass
         else:
-            scr.addstr(loc+2, 8, f"{encrypted}", curses.color_pair(3))
+            try:
+                scr.addstr(loc+2, 8, f"{encrypted}", curses.color_pair(3))
+            except curses.error:
+                pass
         if toggle:
-            scr.addstr(loc+3, 4, f"STATUS: FAILURE")
+            try:
+                scr.addstr(loc+3, 4, f"STATUS: FAILURE")
+            except curses.error:
+                pass
         else:
-            scr.addstr(loc+3, 4, f"STATUS: FAILURE", curses.color_pair(1))
+            try:
+                scr.addstr(loc+3, 4, f"STATUS: FAILURE", curses.color_pair(1))
+            except curses.error:
+                pass
         toggle = toggle is False
         time.sleep(time_delay)
         counter += 1
         scr.refresh()
-    scr.addstr(loc+3, 4, "DECRYPTION SUCCESSFUL", curses.color_pair(2))
-    time.sleep(1)
-
+    try:
+        scr.addstr(loc+3, 4, "DECRYPTION SUCCESSFUL", curses.color_pair(2))
+    except curses.error:
+        pass
 if __name__ == '__main__':
     screen = curses.initscr()
+    screen.scrollok(True)
     curses.start_color()
     curses.init_pair(1, curses.COLOR_BLACK, curses.COLOR_RED)
     curses.init_pair(2, curses.COLOR_GREEN, curses.COLOR_BLACK)
@@ -90,10 +99,16 @@ if __name__ == '__main__':
     curses.noecho()
     curses.cbreak()
     try:
-        screen_location = 0
+        cursor_start = 0
         while True:
-            decrypt_file(loc=screen_location, filename=generate_encrypted_filename(), time_delay = 0.3, scr=screen, message_history='')
-            screen_location += 5
+            rows, cols = screen.getmaxyx()
+            decrypt_file(loc=cursor_start, filename=generate_encrypted_filename(), time_delay = 0.1, scr=screen, message_history='')
+            if rows - cursor_start < 5:
+                screen.scroll(rows)
+                cursor_start = 0
+            else:
+                cursor_start += 5
+
     except KeyboardInterrupt:
         curses.echo()
         curses.nocbreak()
