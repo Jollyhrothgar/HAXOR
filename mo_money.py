@@ -16,7 +16,7 @@ def main():
     elapsed_time = (datetime.now().timestamp() - now.timestamp()) * 1000
     total = elapsed_time * money_per_millisecond
     print(f"You made ${total:.02f}!            ", end="\r")
-
+    time.sleep(0.1)
 
 if __name__ == '__main__':
   main()
